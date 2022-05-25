@@ -1,6 +1,6 @@
-import AppInput from '../base/AppInput'
+import AppRefInput from '../base/AppRefInput'
 import AppLabel from '../base/AppLabel'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import * as yup from 'yup';
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
@@ -13,18 +13,20 @@ const schema = yup.object().shape({
 })
 
 export default function UserForm({addUser}) {
-    const [user, setUser] = useState({
-        name: 'Hayris',
-        lastname: 'Sen',
-        age: 18
-    })
+    const nameRef = useRef();
+    const lastnameRef = useRef();
+    const ageRef = useRef();
 
     const [errors, setErrors] = useState([])
 
     const MySwal = withReactContent(Swal)
 
-    useEffect(() => {
-        schema.validate(user, {abortEarly: false})
+    const changeHandler = () => {
+        schema.validate({
+            name: nameRef.current.value,
+            lastname: lastnameRef.current.value,
+            age: ageRef.current.value,
+        }, {abortEarly: false})
             .then(_ => setErrors([]))
             .catch(_ => {
                 const mapped = _.inner.map(x=> ({
@@ -35,14 +37,21 @@ export default function UserForm({addUser}) {
                     ...mapped
                 ])
             })
-    }, [user])
-
+    };
     const submitHandler = (e) => {
         e.preventDefault()
-        schema.isValid(user)
+        schema.isValid({
+            name: nameRef.current.value,
+            lastname: lastnameRef.current.value,
+            age: ageRef.current.value,
+        })
             .then(valid => {
                 if(valid) {
-                    addUser(user)
+                    addUser({
+                        name: nameRef.current.value,
+                        lastname: lastnameRef.current.value,
+                        age: ageRef.current.value,
+                    })
                     MySwal.fire(
                         {
                             position: 'top-end',
@@ -67,25 +76,37 @@ export default function UserForm({addUser}) {
     }
 
     return (
-        <form onSubmit={submitHandler}>
+        <form onSubmit={submitHandler} onChange={changeHandler}>
             <div className='grid grid-cols-3'>
                 <div className='md:col-span-1 col-span-3 pb-4 relative'>
                     <AppLabel content={'Name'}/>
-                    <AppInput type={'text'} placeholder={'Name'} propName={'name'} obj={user} setObj={setUser}/>
+                    <input type='text' 
+                        placeholder='name'
+                        className="input input-bordered w-full max-w-xs block"
+                        ref={nameRef}
+                    />
                     <small className='text-red-600 absolute left-6'>
                         { errors.find(x => x.path === 'name')?.msg }
                     </small>
                 </div>
                 <div className='md:col-span-1 col-span-3 pb-4 relative'>
                     <AppLabel content={'Lastname'}/>
-                    <AppInput type={'text'} placeholder={'Lastname'} propName={'lastname'} obj={user} setObj={setUser}/>
+                    <input type='text' 
+                        placeholder='lastname'
+                        className="input input-bordered w-full max-w-xs block"
+                        ref={lastnameRef}
+                    />
                     <small className='text-red-600 absolute left-6'>
                         { errors.find(x => x.path === 'lastname')?.msg }
                     </small>
                 </div>
                 <div className='md:col-span-1 col-span-3 pb-4 relative'>
                     <AppLabel content={'Age (Years)'}/>
-                    <AppInput type={'number'} placeholder={'Age'} propName={'age'} obj={user} setObj={setUser}/>
+                    <input type='number' 
+                        placeholder='age'
+                        className="input input-bordered w-full max-w-xs block"
+                        ref={ageRef}
+                    />
                     <small className='text-red-600 absolute left-6'>
                         { errors.find(x => x.path === 'age')?.msg }
                     </small>
